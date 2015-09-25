@@ -8,7 +8,8 @@ lively.require("lively.lang.Runtime").toRun(function() {
       // var project = r.Registry.default().projects["lively.context"];
       // project.reloadAll(project, function(err) { err ? show(err.stack || String(err)) : alertOK("reloaded!"); })
       var files = ["env.js",
-                   "index.js"
+                   "index.js",
+                   "tests/rewriter-test.js"
                   ];
 
       lively.lang.fun.composeAsync(

@@ -6,7 +6,6 @@
     <link type="text/css" rel="stylesheet" href="../node_modules/mocha/mocha.css" />
     <meta http-equiv="cache-control" content="no-cache" />
     <meta http-equiv="pragma" content="no-cache" />
-
   </head>
   <body>
     <div id="mocha"></div>
@@ -14,11 +13,13 @@
     <script type="text/javascript" src="mocha-bundle.js"></script>
     <script type="text/javascript" src="../node_modules/lively.lang/lively.lang.dev.js"></script>
     <script type="text/javascript" src="../node_modules/lively.ast/lively.ast.dev-bundle.js"></script>
+    <script type="text/javascript" src="../node_modules/chai-shallow-deep-equal/chai-shallow-deep-equal.js"></script>
     <script type="text/javascript" >
       mocha.setup("bdd");
       var urls = [
         '../env.js',
-        '../index.js'
+        '../index.js',
+        'rewriter-test.js'
       ];
       loadUncached(urls, function() {
         mocha.checkLeaks();
