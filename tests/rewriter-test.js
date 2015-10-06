@@ -41,7 +41,7 @@ function tryCatch(level, varMapping, inner, optOuterLevel) {
     + "    throw ex;\n"
     + "}\n",
     level, level, generateVarMappingString(), level, level,
-    optOuterLevel < 0 ? 'Global' : '__' + optOuterLevel,
+    optOuterLevel < 0 ? (typeof window !== "undefined" ? 'window' : 'global') : '__' + optOuterLevel,
     inner, level, "__/[0-9]+/__");
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   function generateVarMappingString() {
@@ -136,7 +136,8 @@ function catchOutro(level) {
 }
 
 function debuggerThrow() {
-  return "if (lively.Config.enableDebuggerStatements) {\n" +
+  return "if (lively.lang.Path('lively.Config.enableDebuggerStatements').get(" +
+    (typeof window !== "undefined" ? 'window' : 'global') + ")) {\n" +
     "debugging = true;\n" +
     prefixResult('undefined') + ";\n" +
     "throw {\n" +
