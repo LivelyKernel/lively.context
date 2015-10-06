@@ -10,8 +10,11 @@ lively.require("lively.lang.Runtime").toRun(function() {
       var files = ["env.js",
                    "index.js",
                    "lib/rewriter.js",
+                   "lib/exception.js",
+                   "lib/interpreter.js",
                    "tests/rewriter-test.js",
-                   "tests/rewriter-execution-test.js"
+                   "tests/rewriter-execution-test.js",
+                   "tests/interpreter-test.js"
                   ];
 
       lively.lang.fun.composeAsync(

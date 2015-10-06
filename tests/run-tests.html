@@ -19,8 +19,11 @@
       var urls = [
         '../env.js',
         '../lib/rewriter.js',
+        '../lib/exception.js',
+        '../lib/interpreter.js',
         'rewriter-test.js',
-        'rewriter-execution-test.js'
+        'rewriter-execution-test.js',
+        'interpreter-test.js'
       ];
       loadUncached(urls, function() {
         mocha.checkLeaks();
