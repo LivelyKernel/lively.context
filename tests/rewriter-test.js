@@ -461,7 +461,7 @@ describe('rewriting', function() {
     expect(ast).to.shallowDeepEqual(astCopy);
   });
 
-  it.skip('rewrites call to local function as return', function() {
+  it('rewrites call to local function as return', function() {
     // test if the "return g();" is translated to "return _0.g.call();"
     var func = function() { function g() {}; return g(); }, returnStmt;
     func.stackCaptureMode();
@@ -475,10 +475,10 @@ describe('rewriting', function() {
     expect(returns[0]).to.matchCode(expected);
   });
 
-  it.skip('rewrites call to global function as return', function() {
+  it('rewrites call to global function as return', function() {
     var func = function() { return g(); }, returnStmt;
     func.stackCaptureMode();
-    acorn.walk.simple(func.asRewrittenClosure().ast, {ReturnStatement: function(n) { returnStmt = n; }})
+    ast.acorn.walk.simple(func.asRewrittenClosure().ast, {ReturnStatement: function(n) { returnStmt = n; }})
     var expected = 'return ' + prefixResult('g()') + ';';
     expect(returnStmt).to.matchCode(expected);
   });
@@ -533,30 +533,6 @@ describe('rewriting', function() {
           )) + ';\n');
     expect(result).to.matchCode(expected);
     expect(ast).to.shallowDeepEqual(astCopy);
-  });
-
-  it.skip('rewrites creating a compressed registry', function() {
-    var registry = lively.ast.Rewriting.getCurrentASTRegistry();
-    expect(registry).to.have.length(3); // registry empty at the beginning
-
-    var src = 'function foo() { 2; } var bar = function() { 1; };',
-      ast = parser.parse(src);
-    rewrite(ast);
-    expect(registry).to.have.length(3); // registry has right size after rewrite
-    this.assertASTReference(registry[1], 'FunctionDeclaration is no reference');
-    this.assertASTReference(registry[2], 'FunctionExpression is no reference');
-
-    var refAst = registry[registry[1].registryRef],
-      refAstIndex = registry[1].indexRef,
-      result = acorn.walk.findNodeByAstIndex(refAst, refAstIndex),
-      expected = registry[0].body[0];
-    expect(result).to.equal(expected); // FunctionDeclaration reference correct
-
-    refAst = registry[registry[2].registryRef];
-    refAstIndex = registry[2].indexRef;
-    result = acorn.walk.findNodeByAstIndex(refAst, refAstIndex);
-    expected = registry[0].body[1].declarations[0].init;
-    expect(result).to.equal(expected); // FunctionExpression reference correct');
   });
 
   it('rewrites function arguments correctly', function() {

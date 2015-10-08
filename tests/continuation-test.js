@@ -241,7 +241,7 @@ describe('continuation', function() {
     expect(result).to.equal(3); // resume working
   });
 
-  it.skip('halts and continues (native) forEach function', function() {
+  it('halts and continues (native) forEach function', function() {
     function code() {
       var sum = 0;
       [1,2,3].forEach(function(ea) { sum += ea; if (ea === 2) debugger; });
