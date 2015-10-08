@@ -119,7 +119,7 @@ function closureWrapper(level, name, args, innerVarDecl, inner, optInnerLevel) {
 function catchIntro(level, catchVar, storeResult) {
   storeResult = storeResult == null ? true : !!storeResult;
   return lang.string.format("var _%s = { '%s': %s.isUnwindException ? %s.error : %s };\n"
-    + "if (_%s['%s'].toString() == 'Debugger' && !lively.Config.get('loadRewrittenCode'))\n"
+    + "if (_%s['%s'].toString() == 'Debugger' && !(lively.Config && lively.Config.loadRewrittenCode))\n"
     + "    throw %s;\n"
     + (storeResult ? pcAdvance() + ";\n"
       + "__%s = [\n"
@@ -471,7 +471,7 @@ describe('rewriting', function() {
     });
     expect(returns).to.have.length(1);
     var expected = 'return ' + prefixResult(
-      getVar(0, 'g') + '.call(Global)') + ';';
+      getVar(0, 'g') + '.call(' + (typeof window !== "undefined" ? 'window' : 'global') + ')') + ';';
     expect(returns[0]).to.matchCode(expected);
   });
 
@@ -489,7 +489,7 @@ describe('rewriting', function() {
         astCopy = lang.obj.deepCopy(ast),
         result = rewrite(ast),
         expected = tryCatch(0, { 'foo': closureWrapper(0, 'foo', [], {}, '') },
-          prefixResult(getVar(0, 'foo') + '.call(Global)') + ';\n' +
+          prefixResult(getVar(0, 'foo') + '.call(' + (typeof window !== "undefined" ? 'window' : 'global') + ')') + ';\n' +
           pcAdvance() + ';\n');
     expect(result).to.matchCode(expected);
     expect(ast).to.shallowDeepEqual(astCopy);
@@ -502,7 +502,7 @@ describe('rewriting', function() {
         result = rewrite(ast),
         expected = tryCatch(0, { 'foo': closureWrapper(0, 'foo', [], {}, '2;\n') },
           pcAdvance() + ';\n' +
-          prefixResult(getVar(0, 'foo') + '.call(Global)') + ';\n' +
+          prefixResult(getVar(0, 'foo') + '.call(' + (typeof window !== "undefined" ? 'window' : 'global') + ')') + ';\n' +
           pcAdvance() + ';\n');
     expect(result).to.matchCode(expected);
     expect(ast).to.shallowDeepEqual(astCopy);
@@ -804,7 +804,7 @@ describe('rewriting', function() {
         result = rewrite(ast),
         expected = tryCatch(0, { fn: 'undefined' },
           pcAdvance() + ';\n' +
-          prefixResult(getVar(0, 'fn') + '.call(Global)') + ';\n'
+          prefixResult(getVar(0, 'fn') + '.call(' + (typeof window !== "undefined" ? 'window' : 'global') + ')') + ';\n'
         );
     expect(result).to.matchCode(expected);
     expect(ast).to.shallowDeepEqual(astCopy);
