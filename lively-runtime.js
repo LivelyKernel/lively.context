@@ -1,94 +1,67 @@
-lively.require("lively.lang.Runtime").toRun(function() {
+lively.require("lively.lang.Runtime", "lively.MochaTests", "lively.ast").toRun(function() {
 
-  var r = lively.lang.Runtime;
-  r.Registry.addProject(r.Registry.default(), {
+  lively.lang.Runtime.Registry.addProject({
     name: "lively.context",
 
     reloadAll: function(project, thenDo) {
-      // var project = r.Registry.default().projects["lively.context"];
-      // project.reloadAll(project, function(err) { err ? show(err.stack || String(err)) : alertOK("reloaded!"); })
       var files = ["env.js",
-                   "index.js",
+                  // "index.js",
                    "lib/rewriter.js",
                    "lib/exception.js",
                    "lib/interpreter.js",
+                   "lib/stackReification.js",
+                   "node_modules/chai-shallow-deep-equal/chai-shallow-deep-equal.js",
                    "tests/rewriter-test.js",
                    "tests/rewriter-execution-test.js",
-                   "tests/interpreter-test.js"
-                  ];
-
-      lively.lang.fun.composeAsync(
-        function deps(n) { lively.requires("lively.MochaTests").toRun(function() { n(); }); },
-        function readFiles(n) {
-          lively.lang.arr.mapAsyncSeries(files,
-            function(fn,_,n) {
-              lively.shell.cat(fn, {cwd: project.rootDir},
-              function(err, c) {
-                show(c)
-                n(err, {name: fn, content: c}); });
-            }, n);
-        },
-        function(fileContents, next) {
-          lively.lang.arr.mapAsyncSeries(fileContents,
-            function(ea,_,n) {
-              r.Project.processChange(project, ea.name, ea.content, n);
-            },
-            next);
-        }
-      )(thenDo);
+                   "tests/interpreter-test.js",
+                   "tests/continuation-test.js"];
+      lively.lang.Runtime.loadFiles(project, files, thenDo);
     },
 
     resources: {
 
       "env.js": {
-        matches: /lively.context\/env.js$/,
-        changeHandler: function(change, project, resource, whenHandled) {
+        matches: /env.js$/,
+        changeHandler: function(change, project, resource, thenDo) {
           var state = project.state || (project.state = {
             lively: {
+              escodegen: escodegen,
               lang: project.state ? project.state.lively.lang : lively.lang,
               ast: project.state ? project.state.lively.ast : lively.ast
             }
           });
-show(state)
-          evalCode(change.newSource, state, change.resourceId);
-    	  	whenHandled();
+          lively.lang.Runtime.evalCode(project, change.newSource, state, change.resourceId, thenDo);
         }
       },
 
       "interface code": {
-        matches: /lively.context\/(lib\/.*|index)\.js$/,
-        changeHandler: function(change, project, resource, whenHandled) {
-          var state = project.state || {};
-          evalCode(change.newSource, state, change.resourceId);
-    	  	whenHandled();
+        matches: /(lib\/.*|index)\.js$/,
+        changeHandler: function(change, project, resource, thenDo) {
+          lively.lang.Runtime.evalCode(project, change.newSource, project.state || {}, change.resourceId, thenDo);
+        }
+      },
+
+      "node_modules": {
+        matches: /node_modules\/.*\.js$/,
+        changeHandler: function(change, project, resource, thenDo) {
+          lively.lang.Runtime.evalCode(project, change.newSource, project.state || {}, change.resourceId, thenDo);
         }
       },
 
       "tests": {
-        matches: /lively.context\/tests\/.*\.js$/,
-        changeHandler: function(change, project, resource, whenHandled) {
+        matches: /tests\/.*\.js$/,
+        changeHandler: function(change, project, resource, thenDo) {
           if (!project.state) {
             var msg = "cannot update runtime for " + change.resourceId + "\n because the runtime state is undefined."
-            show(msg); whenHandled(new Error(msg)); return;
+            show(msg); thenDo(new Error(msg)); return;
           }
-          lively.requires("lively.MochaTests").toRun(function() {
-            evalCode(change.newSource, project.state, change.resourceId);
-            lively.MochaTests.runAll();
-      	  	whenHandled();
-          })
+          lively.lang.Runtime.evalCode(project, change.newSource, project.state, change.resourceId, function(err) {  
+            // lively.MochaTests.runAll();
+            thenDo(err);
+          });
         }
       }
     }
   });
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function evalCode(code, state, resourceName) {
-    lively.lang.VM.runEval(code,
-      {topLevelVarRecorder: state, context: state, sourceURL: resourceName},
-      function(err, _result) {
-    		err && show("error when updating the runtime for " + resourceName + "\n" + (err.stack || err));
-    		!err && alertOK("updated");
-    	});
-  }
 });

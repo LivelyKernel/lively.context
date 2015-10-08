@@ -1,6 +1,6 @@
 /*global global, beforeEach, afterEach, after, describe, it, expect*/
 
-var env = typeof module !== "undefined" && module.require ? module.require("../env") : window;
+var env = typeof module !== "undefined" && module.require ? module.require("../env") : Global;
 var escodegen = env.escodegen, acorn = env.acorn;
 var chai = typeof module !== "undefined" && module.require ? module.require("./chai-bundle.js") : env.chai;
 var lang = env.lively.lang || lively.lang, ast = env.lively.ast || lively.ast;
