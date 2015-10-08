@@ -21,9 +21,11 @@
         '../lib/rewriter.js',
         '../lib/exception.js',
         '../lib/interpreter.js',
+        '../lib/stackReification.js',
         'rewriter-test.js',
         'rewriter-execution-test.js',
-        'interpreter-test.js'
+        'interpreter-test.js',
+        'continuation-test.js'
       ];
       loadUncached(urls, function() {
         mocha.checkLeaks();
