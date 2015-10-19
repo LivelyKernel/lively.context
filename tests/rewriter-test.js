@@ -849,4 +849,14 @@ describe('rewriting', function() {
     expect(ast).to.shallowDeepEqual(astCopy);
   });
 
+  it('rewrites arrow function with single body node', function() {
+    var src = 'var x = foo => ({x: 23});',
+        ast = parser.parse(src),
+        astCopy = lang.obj.deepCopy(ast),
+        result = rewrite(ast),
+        sourceResult = escodegen.generate(result);
+    expect(sourceResult).to.include("function (foo)", "arrow expr not converted to function?");
+    expect(sourceResult).to.include("return { x: 23 };", "arrow result not returning?");
+  });
+
 });
