@@ -27,8 +27,8 @@
   },
   "homepage": "https://github.com/LivelyKernel/lively.context",
   "dependencies": {
-    "lively.lang": ">=0.4.4",
-    "lively.ast": ">=0.2.8",
+    "lively.lang": ">=0.4.10",
+    "lively.ast": ">=0.2.10",
     "escodegen": "^1.7"
   },
   "devDependencies": {
