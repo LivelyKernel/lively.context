@@ -1,0 +1,153 @@
+<!doctype html>
+<html>
+  <head>
+    <title>lively.context</title>
+    <link rel="stylesheet" type="text/css" media="screen" href="index.css">
+    <script src="./node_modules/ace-editor-builds/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+    <script src="./node_modules/lively.ast/lively.ast.dev-bundle.js" type="text/javascript" charset="utf-8"></script>
+    <script src="./lib/rewriter.js" type="text/javascript" charset="utf-8"></script>
+    <script src="./lib/exception.js" type="text/javascript" charset="utf-8"></script>
+    <script src="./lib/interpreter.js" type="text/javascript" charset="utf-8"></script>
+    <script src="./lib/stackReification.js" type="text/javascript" charset="utf-8"></script>
+  </head>
+  <body>
+    <div class="content">
+      <h1><span class="lively">lively</span>.context</h1>
+      <em>lively.context</em> provides a simple way to capture the context of a JavaScript execution and make it available inside of the JavaScript runtime.
+      This enables inspection, modification, duplication and (stepwise) execution.
+
+      <h2>What do I need this for?</h2>
+      There are many possible applications for it. A very simple one is to inspect the scope of a running application &mdash; <strong>at any time.</strong> Just mark any line in the source code below by clicking the on the line numbers on the left to inspect the state <em>before</em> that line gets executed.<br>
+      <div id="vars-scope" class="varBox">
+        <div class="capturedVars">Captured Variables</div>
+        <hr>
+        <dl class="varList">
+          <dd>not run yet</dd>
+        </dl>
+      </div>
+      <pre id="editor-scope">// CODE</pre>
+      <button class="run" onclick="step('scope');">Run!</button>
+      <button onclick="reset('scope');">Reset</button><br>
+      Try some more examples:<br>
+      <button onclick="example_sumLoop('scope');">Sum Loop</button>
+      <button onclick="example_sumReduce('scope');">Sum Reduce</button>
+      <button onclick="example_fibonacci('scope');">Fibonacci</button>
+      <button onclick="example_square('scope');">Square</button><br>
+      <hr>
+      <br>
+      Another one is a (simple) debugger for JavaScript written in JavaScript:<br>
+      <div id="vars-debugger" class="varBox">
+        <div class="capturedVars">Captured Variables (on exeception)</div>
+        <hr>
+        <dl class="varList">
+          <dd>not run yet</dd>
+        </dl>
+      </div>
+      <pre id="editor-debugger">// CODE</pre>
+      <div id="exception-debugger" class="exception" style="display: none;">This.is.the.error.message</div>
+      <button class="run" onclick="run('debugger');">Run!</button>
+      <button onclick="reset('debugger');">Reset</button><br>
+      Try it out yourself! Edit the source code above, add errors or a <code>debugger</code> statement and run it to see where it stops!
+
+      <h2>How does it work?</h2>
+      The whole package consists of:
+      <ul>
+        <li>a rewriter &mdash; <code>lively.ast.Rewriting</code> &mdash; (nowadays know as a transpiler),</li>
+        <li>an JavaScript interpreter &mdash; <code>lively.ast.AcornInterpreter</code> &mdash; and</li>
+        <li>some classes to model contexts, like scopes, frames, continuations, etc.</li>
+      </ul>
+      Addiitonally, there are some convenience methods and classes for the execution.
+      <h2>How can I use it?</h2>
+      Download the <em>lively.context</em> package either from <a href="https://github.com/LivelyKernel/lively.context" target="_blank">GitHub</a> or <a href="https://www.npmjs.com/package/lively.context" target="_blank">npm</a> and use it in the browser or Node.JS.
+      <h3>1. Loading the Library</h3>
+      <h4>In the browser:</h4>
+      <pre id="editor-usage-browser" style="width: 850px; height: 130px">
+&lt;script src=&quot;./node_modules/lively.ast/lively.ast.dev-bundle.js&quot; type=&quot;text/javascript&quot; charset=&quot;utf-8&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;./lib/rewriter.js&quot; type=&quot;text/javascript&quot; charset=&quot;utf-8&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;./lib/exception.js&quot; type=&quot;text/javascript&quot; charset=&quot;utf-8&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;./lib/interpreter.js&quot; type=&quot;text/javascript&quot; charset=&quot;utf-8&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;./lib/stackReification.js&quot; type=&quot;text/javascript&quot; charset=&quot;utf-8&quot;&gt;&lt;/script&gt;
+&lt;script type=&quot;text/javascript&quot; charset=&quot;utf-8&quot;&gt;
+  // either interpret or rewrite code and execute it here (see below)
+&lt;/script&gt;</pre>
+      <h4>In Node.JS:</h4>
+      <pre id="editor-usage-nodejs" style="width: 850px; height: 80px">
+require('./lib/rewriter.js');
+require('./lib/interpreter.js');
+require('./lib/stackReification.js');
+
+// either interpret or rewrite code and execute it here (see below)</pre>
+      <h3>2. Executing Code</h3>
+      <h4>To interpret code:</h4>
+      <pre id="editor-usage-interpret" style="width: 850px; height: 230px">
+// provide source code, src in this example
+// if you have a function, as func():
+//   var src = func.toString();
+
+var ast = lively.ast.parse(src, { sourceType: 'script' }),
+    interpreter = new lively.ast.AcornInterpreter.Interpreter();
+try {
+  interpreter.run(ast);
+} catch (e) {
+  if (e.isUnwindException) {
+    // An UnwindException is thrown for the breakpoints (or errors),
+    // so do what you want to handle it here
+  }
+}</pre>
+      <h4>To run rewritten (compile) code:</h4>
+      <pre id="editor-usage-rewrite" style="width: 850px; height: 310px">
+// provide a function, func() in this example
+// if you have source code, as src:
+//   var func = eval(src);
+// if src is not a function, wrap it into a function:
+//   var func = eval('(function() {' + src + ' });');
+
+try {
+  var runtime = lively.ast.StackReification.run(func);
+  if (runtime.isContinuation) {
+    // if the execution was interruped, runtime is a continuation...
+    // => do what you want with it here
+  }
+} catch(e) {
+  if (e.unwindException) { // might have been an UnwindException originally
+    e = e.unwindException; // recover the UnwindException
+    e.recreateFrames();
+    // now you can work with the frames of the error
+  }
+}</pre>
+      <h3>3. Working With UnwindExceptions, Frames and Scopes</h3>
+      <h4>UnwindException</h4>
+      An <code>UnwindException</code> is thown whenever an error appears during code execution (or interpretation).
+      It can be detect either by checking for its type or by checking for the exception's property <code>isUnwindException</code>.
+      Furthermore, an <code>UnwindException</code> has two properties that resemble frames: <code>top</code> and <code>last</code>.<br>
+      <code>top</code> is the frame where the execution stopped or the error happened.
+      <code>last</code> is the last frame captured walking up all the frames towards where the execution started.
+      You can navigate through all the frames starting at <code>top</code> and using its <code>parentFrame</code> property. Eventually you will end up at <code>last</code>.
+      <h4>Frames</h4>
+      Every frame consists of:
+      <ul>
+        <li>a <em>scope</em> captured in its <code>scope</code> property (see below for details),</li>
+        <li>a <em>program counter</em> captured in <code>pc</code> and <code>pcStatement</code> naming the AST node the execution stopped,</li>
+        <li>a <em>function</em> captured in <code>func</code> that is represented by this frame,</li>
+        <li>a <em>context/this object</em> captured in <code>thisObject</code> and</li>
+        <li>a reference to the <em>parent frame</em> captured in <code>parentFrame</code> which can be null if it is the last frame captured.</li>
+      </ul>
+      <h4>Scope</h4>
+      A scope object represents the lexical scope of a frame. It consists of two properties:
+      <ul>
+        <li><code>mapping</code> which is a dictionary of all the bindings &mdash; variables and functions &mdash; defined in that scope and</li>
+        <li><code>parentScope</code> which is a reference to the lexical scope surrounding this scope - if there is no parent scope it's null.</li>
+      </ul>
+      During execution or interpretation, bindings are looked up from the most inner scope towards the outer scope. If a binding cannot be found in the current scope, the parent scope is asked and so on.<br>
+      A helper method <code>findScope(bindingName)</code> can be used to automatically go through all the scopes in order and find a binding. If it was found in the scope, an object structured like <code>{ val: [value], scope: [its scope] }</code> is returned. A second optional parameter defines what happens if a binding cannot be found. If set to true, <code>{ val: undefined, scope: [starting scope] }</code> is returned. Otherwise &mdash; and this is the default &mdash; a ReferenceError is thrown.<br><br>
+      <strong>Note:</strong> Since JavaScript distinguishes between lexical scope and function scope, the hierarchy of <em>scopes</em> and <em>frames</em> can be different! <a href="#RefScope">[1]</a>
+      <h2>Authors</h2>
+      <em>Marko R&ouml;der</em> &mdash; <a href="http://www.cdglabs.org/" target="_blank">Communications Design Group</a>, SAP Labs<br>
+      <em>Robert Krahn</em> &mdash; <a href="http://www.cdglabs.org/" target="_blank">Communications Design Group</a>, SAP Labs<br><br>
+      A special thanks to <em>Christopher Schuster</em> who did the initial work and wrote his master's thesis on this topic.
+      <h2>References</h2>
+      <a name="RefScope">[1]</a> <a href="http://toddmotto.com/everything-you-wanted-to-know-about-javascript-scope/" target="_blank">http://toddmotto.com/everything-you-wanted-to-know-about-javascript-scope/</a>
+    </div>
+    <script src="example.js" type="text/javascript" charset="utf-8"></script>
+  </body>
+</html>

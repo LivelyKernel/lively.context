@@ -27,6 +27,7 @@
   },
   "homepage": "https://github.com/LivelyKernel/lively.context",
   "dependencies": {
+    "ace-editor-builds": "=1.2.0",
     "lively.lang": ">=0.4.10",
     "lively.ast": ">=0.2.10",
     "escodegen": "^1.7"

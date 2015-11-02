@@ -1,0 +1,103 @@
+body {
+  font-family: Georgia, Palatino, serif;
+  align: center;
+  background-color: #f9f9f9;
+  margin: 0px;
+}
+.content {
+  width: 850px;
+  margin: 0 auto;
+  border: 1px solid #dddddd;
+  border-top: 1px solid #f9f9f9;
+  border-bottom: 1px solid #f9f9f9;
+  padding: 0px 25px 20px 25px;
+}
+.lively {
+  color: #f57c00;
+}
+code {
+  font-weight: bold;
+  font-size: 1.2em;
+}
+button {
+  border-style: none;
+  border-radius: 4px;
+  box-shadow: 1px 1px 1px #888888;
+  background-color: #eeeeee;
+  font-size: 10pt;
+  font-weight: bold;
+  padding: 5px 15px;
+  margin-top: 5px;
+  margin-bottom: 10px;
+}
+button.run {
+  background-color: #00cc00;
+}
+hr {
+  border: 0;
+  border-top: 1px solid #dddddd;
+}
+pre {
+  height: 200px;
+  width: 600px;
+  border: 1px solid #dddddd;
+  border-radius: 4px;
+  margin-top: 5px;
+  box-shadow: 1px 1px 1px #888888;
+}
+.varBox {
+  font-family: Arial;
+  font-size: 10pt;
+  float: right;
+  padding: 2px;
+  margin-top: 5px;
+  width: 230px;
+  height: 196px;
+  background-color: white;
+  border: 1px solid #dddddd;
+  border-radius: 4px;
+  box-shadow: 1px 1px 1px #888888;
+  overflow: scroll;
+}
+.capturedVars {
+  text-align: center;
+  font-weight: bold;
+}
+.varList dt {
+  font-weight: bold;
+  float: left;
+  clear: left;
+  padding-left: 10px;
+  padding-right: 3px;
+}
+.varList dt:after {
+  content: ":";
+}
+.varList dd {
+  color: #999999;
+  font-style: italic;
+  padding: 0 0 2px 0;
+}
+hr {
+  border-style: solid;
+  border-color: #dddddd;
+  margin: 2px 0px;
+}
+.ace_gutter-cell.ace_breakpoint{
+  background-color: #ffcccc;
+  border-radius: 20px 0px 0px 20px;
+  box-shadow: 0px 0px 1px 1px #ff0000 inset;
+}
+.programCounter {
+  background-color: #ff5555;
+  position: absolute;
+}
+.exception {
+  font-family: Arial;
+  font-size: 11pt;
+  padding: 5px;
+  margin-bottom: 10px;
+  background-color: #ffcccc;
+  border-radius: 4px;
+  box-shadow: 0px 0px 1px 1px #ff0000;
+}
