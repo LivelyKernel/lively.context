@@ -907,6 +907,7 @@ describe('rewriting', function() {
     }
 
     // TODO: delete closureWrapper
+    // what about line 'argDecl["this"] = "this";'?
     function closureWrapper(level, name, args, innerVarDecl, inner, optInnerLevel) {
         // something like:
         // __createClosure('AcornRewriteTests', 333, __0, function () {
@@ -927,8 +928,7 @@ describe('rewriting', function() {
 
     describe('recording', function() {
 
-        // TODO: rename test
-        it('test01RecordFunctionParams', function () {
+        it('records function parameters', function () {
             // var t = new lively.ast.tests.RewriterTests.AcornRewrite();
             // t.postfixResult(t.setVar(3, "foo", 23), 10);
             // t.prefixResult("1+2", 10)
@@ -938,7 +938,7 @@ describe('rewriting', function() {
             // this.doitContext = new lively.ast.tests.RewriterTests.RewriteForRecording()
             // this.setUp()
 
-            var source = "function foo(n, m) { return n; }"
+            var source = "function foo(n, m) { return n; }";
             // lively.ast.printAst(source, {printIndex: true});
 
 
@@ -959,9 +959,8 @@ describe('rewriting', function() {
             expect(recordingRewrite).to.matchCode(expected);
         });
 
-        // TODO: rename test
-        it('test02RecordReturnStatement', function () {
-            var source = "function foo() { return 1; }"
+        it('records return statement', function () {
+            var source = "function foo() { return 1; }";
 
             var recordingAstRegistry = {};
             var recordingRewriter = new lively.ast.Rewriting.RecordingRewriter(recordingAstRegistry, "AcornRewriteTests", "__test_recordIt__");
