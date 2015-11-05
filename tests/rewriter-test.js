@@ -864,7 +864,7 @@ describe('rewriting', function() {
 (function() {
     function recordIt(exprToRecord, level, optRecorderName) {
         var recorderName = optRecorderName || "__test_recordIt__";
-        return lively.lang.string.format(
+        return lang.string.format(
             "%s(%s, __%s, __/[0-9]+|lastNode/__, 'AcornRewriteTests', %s);",
             recorderName, exprToRecord, level, level)
     }
@@ -873,12 +873,12 @@ describe('rewriting', function() {
         level = level || 0;
         optOuterLevel = !isNaN(optOuterLevel) ? optOuterLevel : (level - 1);
 
-        var argRecordings = Object.keys(varMapping)
+        var argRecordings = lang.arr.compact(Object.keys(varMapping)
                 .map(function(argName) { return argName === "this" ? null : recordIt(argName, level); })
-                .compact(),
+            ),
             argRecordingsString = argRecordings.length ? argRecordings.join("\n") + "\n" : "";
 
-        return Strings.format(
+        return lang.string.format(
             "var _ = {}, lastNode = undefined, debugging = false, __%s = [], _%s = %s;\n"
             + "__%s.push(_, _%s, %s);\n"
             + (recordArgs ? argRecordingsString : "\n")
@@ -919,114 +919,65 @@ describe('rewriting', function() {
         optInnerLevel = !isNaN(optInnerLevel) ? optInnerLevel : (level + 1);
         args.forEach(function(argName) { argDecl[argName] = argName; });
         argDecl["this"] = "this";
-        return Strings.format(
+        return lang.string.format(
             "__createClosure('AcornRewriteTests', __/[0-9]+/__, __%s, function %s(%s) {\n"
             + tryCatch(optInnerLevel, argDecl, inner, level, true)
             + "})", level, name, args.join(', '));
     }
 
     describe('recording', function() {
-        var parser = ast,
-            rewrite,
-            astRegistry, oldAstRegistry;
 
-        beforeEach(function () {
-            rewrite = function (node) {
-                return rewriting.rewrite(node, astRegistry, 'RewriteTests');
-            };
-            oldAstRegistry = rewriting.getCurrentASTRegistry();
-            astRegistry = {};
-            rewriting.setCurrentASTRegistry(astRegistry);
+        // TODO: rename test
+        it('test01RecordFunctionParams', function () {
+            // var t = new lively.ast.tests.RewriterTests.AcornRewrite();
+            // t.postfixResult(t.setVar(3, "foo", 23), 10);
+            // t.prefixResult("1+2", 10)
+            // t.storeResult("1+3", 10);
+            // t.closureWrapper(1, "foo", ["n", "m"], {}, "1+2", 3)
+
+            // this.doitContext = new lively.ast.tests.RewriterTests.RewriteForRecording()
+            // this.setUp()
+
+            var source = "function foo(n, m) { return n; }"
+            // lively.ast.printAst(source, {printIndex: true});
+
+
+            var recordingAstRegistry = {};
+            var recordingRewriter = new lively.ast.Rewriting.RecordingRewriter(recordingAstRegistry, "AcornRewriteTests", "__test_recordIt__");
+            // var recordingRewriter = new lively.ast.Rewriting.Rewriter(recordingAstRegistry, "AcornRewriteTests", "__test_recordIt__");
+            var ast = lively.ast.parse(source, { addSource: true });
+            var recordingRewrite = recordingRewriter.rewrite(ast);
+            var result = escodegen.generate(recordingRewrite);
+
+            var expected = tryCatch(0,
+                {"this": "this", foo: closureWrapper(
+                    0, 'foo', ["n", "m"], {},
+                    // "return " + this.recordIt('('+this.postfixResult(this.getVar(1, 'n'), 3)+')', 1))
+                    "return " + getVar(1, 'n') + ";")
+                }, pcAdvance(6) + ";");
+
+            expect(recordingRewrite).to.matchCode(expected);
         });
 
-        afterEach(function () {
-            rewriting.setCurrentASTRegistry(oldAstRegistry);
-        });
+        // TODO: rename test
+        it('test02RecordReturnStatement', function () {
+            var source = "function foo() { return 1; }"
 
-        it('is a new test', function () {
+            var recordingAstRegistry = {};
+            var recordingRewriter = new lively.ast.Rewriting.RecordingRewriter(recordingAstRegistry, "AcornRewriteTests", "__test_recordIt__");
+            // var recordingRewriter = new lively.ast.Rewriting.Rewriter(recordingAstRegistry, "AcornRewriteTests", "__test_recordIt__");
+            var ast = lively.ast.parse(source, { addSource: true });
+            var recordingRewrite = recordingRewriter.rewrite(ast);
+            var result = escodegen.generate(recordingRewrite);
 
+            var expected = tryCatch(0,
+                {"this": "this", foo: closureWrapper(
+                    0, 'foo', [], {},
+                    // "return " + this.recordIt('('+this.postfixResult("1", 1)+')', 1))
+                    "return 1;")
+                }, pcAdvance(4) + ";");
+
+            expect(recordingRewrite).to.matchCode(expected);
         });
     });
-
-    return;
-
-    lively.ast.tests.RewriterTests.AcornRewrite.subclass('lively.ast.tests.RewriterTests.RewriteForRecording',
-        'running', {
-
-            // setUp: function($super) {
-            //     $super();
-            //     this.parser = lively.ast;
-            //     this.rewrite = function(node) {
-            //         return lively.ast.Rewriting.rewrite(node, astRegistry, 'AcornRewriteTests');
-            //     };
-            //     this.oldAstRegistry = lively.ast.Rewriting.getCurrentASTRegistry();
-            //     var astRegistry = this.astRegistry = {};
-            //     lively.ast.Rewriting.setCurrentASTRegistry(astRegistry);
-            // },
-
-            // tearDown: function($super) {
-            //     $super();
-            //     lively.ast.Rewriting.setCurrentASTRegistry(this.oldAstRegistry);
-            // }
-
-        },
-        'helper', {
-
-
-// delete lively.ast.tests.RewriterTests.RewriteForRecording.prototype.closureWrapper
-        },
-        'testing', {
-
-
-            test01RecordFunctionParams: function() {
-                // var t = new lively.ast.tests.RewriterTests.AcornRewrite();
-                // t.postfixResult(t.setVar(3, "foo", 23), 10);
-                // t.prefixResult("1+2", 10)
-                // t.storeResult("1+3", 10);
-                // t.closureWrapper(1, "foo", ["n", "m"], {}, "1+2", 3)
-
-                // this.doitContext = new lively.ast.tests.RewriterTests.RewriteForRecording()
-                // this.setUp()
-
-                var source = "function foo(n, m) { return n; }"
-                // lively.ast.printAst(source, {printIndex: true});
-
-
-                var recordingAstRegistry = {};
-                var recordingRewriter = new lively.ast.Rewriting.RecordingRewriter(recordingAstRegistry, "AcornRewriteTests", "__test_recordIt__");
-                // var recordingRewriter = new lively.ast.Rewriting.Rewriter(recordingAstRegistry, "AcornRewriteTests", "__test_recordIt__");
-                var ast = lively.ast.parse(source, { addSource: true });
-                var recordingRewrite = recordingRewriter.rewrite(ast);
-                var result = escodegen.generate(recordingRewrite);
-
-                var expected = tryCatch(0,
-                    {"this": "this", foo: closureWrapper(
-                        0, 'foo', ["n", "m"], {},
-                        // "return " + this.recordIt('('+this.postfixResult(this.getVar(1, 'n'), 3)+')', 1))
-                        "return " + this.getVar(1, 'n') + ";")
-                    }, this.pcAdvance(6) + ";");
-
-                this.assertASTMatchesCode(recordingRewrite, expected);
-            },
-
-            test02RecordReturnStatement: function() {
-                var source = "function foo() { return 1; }"
-
-                var recordingAstRegistry = {};
-                var recordingRewriter = new lively.ast.Rewriting.RecordingRewriter(recordingAstRegistry, "AcornRewriteTests", "__test_recordIt__");
-                // var recordingRewriter = new lively.ast.Rewriting.Rewriter(recordingAstRegistry, "AcornRewriteTests", "__test_recordIt__");
-                var ast = lively.ast.parse(source, { addSource: true });
-                var recordingRewrite = recordingRewriter.rewrite(ast);
-                var result = escodegen.generate(recordingRewrite);
-
-                var expected = tryCatch(0,
-                    {"this": "this", foo: closureWrapper(
-                        0, 'foo', [], {},
-                        // "return " + this.recordIt('('+this.postfixResult("1", 1)+')', 1))
-                        "return 1;")
-                    }, this.pcAdvance(4) + ";");
-
-                this.assertASTMatchesCode(recordingRewrite, expected);
-            }
-        });
 })();
