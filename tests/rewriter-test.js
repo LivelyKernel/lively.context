@@ -906,7 +906,7 @@ describe('rewriting', function() {
         }
     }
 
-    // TODO: delete closureWrapper
+    // TODO: delete duplicate function 'closureWrapper'
     // what about line 'argDecl["this"] = "this";'?
     function closureWrapper(level, name, args, innerVarDecl, inner, optInnerLevel) {
         // something like:
