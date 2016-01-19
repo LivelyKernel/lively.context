@@ -1,6 +1,6 @@
 {
   "name": "lively.context",
-  "version": "0.1.0",
+  "version": "0.1.5",
   "description": "Rewriting JavaScript code to introduce first-class contexts and tools to manipulate those contexts (at runtime)",
   "main": "index.js",
   "scripts": {
