@@ -860,3 +860,123 @@ describe('rewriting', function() {
   });
 
 });
+
+(function() {
+    function recordIt(exprToRecord, level, optRecorderName) {
+        var recorderName = optRecorderName || "__test_recordIt__";
+        return lang.string.format(
+            "%s(%s, __%s, __/[0-9]+|lastNode/__, 'AcornRewriteTests', %s);",
+            recorderName, exprToRecord, level, level)
+    }
+
+    function tryCatch(level, varMapping, inner, optOuterLevel, recordArgs) {
+        level = level || 0;
+        optOuterLevel = !isNaN(optOuterLevel) ? optOuterLevel : (level - 1);
+
+        var argRecordings = lang.arr.compact(Object.keys(varMapping)
+                .map(function(argName) { return argName === "this" ? null : recordIt(argName, level); })
+            ),
+            argRecordingsString = argRecordings.length ? argRecordings.join("\n") + "\n" : "";
+
+        return lang.string.format(
+            "var _ = {}, lastNode = undefined, debugging = false, __%s = [], _%s = %s;\n"
+            + "__%s.push(_, _%s, %s);\n"
+            + (recordArgs ? argRecordingsString : "\n")
+            + "%s\n",
+            level, level, generateVarMappingString(), level, level,
+            optOuterLevel < 0 ? 'Global' : '__' + optOuterLevel,
+            inner); //, level, "__/[0-9]+/__");
+
+        // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+        function generateVarMappingString() {
+            if (!varMapping) return '{}';
+            var ast = {
+                type: "ObjectExpression",
+                properties: Object.keys(varMapping).map(function(k) {
+                    return {
+                        type: "Property",
+                        kind: "init",
+                        key: {type: "Literal",value: k},
+                        value: {name: varMapping[k],type: "Identifier"}
+                    }
+                })
+            };
+            return escodegen.generate(ast);
+        }
+    }
+
+    // TODO: delete duplicate function 'closureWrapper'
+    // what about line 'argDecl["this"] = "this";'?
+    function closureWrapper(level, name, args, innerVarDecl, inner, optInnerLevel) {
+        // something like:
+        // __createClosure('AcornRewriteTests', 333, __0, function () {
+        //     try {
+        //         var _ = {}, _1 = {}, __1 = [_,_1,__0];
+        //     ___ DO INNER HERE ___
+        //     } catch (e) {...}
+        // })
+        var argDecl = innerVarDecl || {};
+        optInnerLevel = !isNaN(optInnerLevel) ? optInnerLevel : (level + 1);
+        args.forEach(function(argName) { argDecl[argName] = argName; });
+        argDecl["this"] = "this";
+        return lang.string.format(
+            "__createClosure('AcornRewriteTests', __/[0-9]+/__, __%s, function %s(%s) {\n"
+            + tryCatch(optInnerLevel, argDecl, inner, level, true)
+            + "})", level, name, args.join(', '));
+    }
+
+    describe('recording', function() {
+
+        it('records function parameters', function () {
+            // var t = new lively.ast.tests.RewriterTests.AcornRewrite();
+            // t.postfixResult(t.setVar(3, "foo", 23), 10);
+            // t.prefixResult("1+2", 10)
+            // t.storeResult("1+3", 10);
+            // t.closureWrapper(1, "foo", ["n", "m"], {}, "1+2", 3)
+
+            // this.doitContext = new lively.ast.tests.RewriterTests.RewriteForRecording()
+            // this.setUp()
+
+            var source = "function foo(n, m) { return n; }";
+            // lively.ast.printAst(source, {printIndex: true});
+
+
+            var recordingAstRegistry = {};
+            var recordingRewriter = new lively.ast.Rewriting.RecordingRewriter(recordingAstRegistry, "AcornRewriteTests", "__test_recordIt__");
+            // var recordingRewriter = new lively.ast.Rewriting.Rewriter(recordingAstRegistry, "AcornRewriteTests", "__test_recordIt__");
+            var ast = lively.ast.parse(source, { addSource: true });
+            var recordingRewrite = recordingRewriter.rewrite(ast);
+            var result = escodegen.generate(recordingRewrite);
+
+            var expected = tryCatch(0,
+                {"this": "this", foo: closureWrapper(
+                    0, 'foo', ["n", "m"], {},
+                    // "return " + this.recordIt('('+this.postfixResult(this.getVar(1, 'n'), 3)+')', 1))
+                    "return " + getVar(1, 'n') + ";")
+                }, pcAdvance(6) + ";");
+
+            expect(recordingRewrite).to.matchCode(expected);
+        });
+
+        it('records return statement', function () {
+            var source = "function foo() { return 1; }";
+
+            var recordingAstRegistry = {};
+            var recordingRewriter = new lively.ast.Rewriting.RecordingRewriter(recordingAstRegistry, "AcornRewriteTests", "__test_recordIt__");
+            // var recordingRewriter = new lively.ast.Rewriting.Rewriter(recordingAstRegistry, "AcornRewriteTests", "__test_recordIt__");
+            var ast = lively.ast.parse(source, { addSource: true });
+            var recordingRewrite = recordingRewriter.rewrite(ast);
+            var result = escodegen.generate(recordingRewrite);
+
+            var expected = tryCatch(0,
+                {"this": "this", foo: closureWrapper(
+                    0, 'foo', [], {},
+                    // "return " + this.recordIt('('+this.postfixResult("1", 1)+')', 1))
+                    "return 1;")
+                }, pcAdvance(4) + ";");
+
+            expect(recordingRewrite).to.matchCode(expected);
+        });
+    });
+})();

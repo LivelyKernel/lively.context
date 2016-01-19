@@ -4,7 +4,7 @@
   "description": "Rewriting JavaScript code to introduce first-class contexts and tools to manipulate those contexts (at runtime)",
   "main": "index.js",
   "scripts": {
-    "test": "node_modules/mocha/bin/mocha tests/*-test.js && node_modules/mocha-phantomjs/bin/mocha-phantomjs tests/run-tests.html"
+    "test": "mocha tests/*-test.js && mocha-phantomjs tests/run-tests.html"
   },
   "repository": {
     "type": "git",
